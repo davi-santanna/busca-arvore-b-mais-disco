@@ -57,8 +57,47 @@ void imprime_arquivos() {
  */
 int busca(int chave, char *nome_arquivo_metadados, char *nome_arquivo_indice, char *nome_arquivo_dados)
 {
-	//TODO: Implementar essa função
-	return -1;
+    TMetadados *metadados = le_arq_metadados(nome_arquivo_metadados);
+
+    if (metadados->raiz_folha) {
+        int resultado = metadados->pont_raiz;
+        free(metadados);
+        return resultado;
+    }
+
+    FILE *arq_i = fopen(nome_arquivo_indice, "rb");
+    if (!arq_i) {
+        free(metadados);
+        return -1;
+    }
+
+    int ordem = metadados->d;
+    int pont = metadados->pont_raiz;
+    int resultado = -1;
+
+    while (1) {
+        if (fseek(arq_i, pont, SEEK_SET) != 0) break;
+        TNoInterno *no = le_no_interno(ordem, arq_i);
+        if (no == NULL) break;
+
+        int y = 0;
+        while (y < no->m && chave >= no->chaves[y]) {
+            y++;
+        }
+
+        pont = no->p[y];
+        int aponta_folha = no->aponta_folha;
+        libera_no_interno(no);
+
+        if (aponta_folha) {
+            resultado = pont;
+            break;
+        }
+    }
+
+    fclose(arq_i);
+    free(metadados);
+    return resultado;
 }
 
 int main () {
